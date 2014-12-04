@@ -4,6 +4,10 @@
 * @CreateDate  2014/12/4
 */
 (function(window){
+	var AudioContext = webkitAudioContext,
+		GetUserMedia = webkitGetUserMedia,
+				VoiceRecognition = webkitSpeechRecognition;
+
    	var Core=new function(){
 		var _pkid=0;
 	   	/*
@@ -172,35 +176,55 @@
 		}
 	};
 
+	var SoundCanvas=function(){
+
+	};
+	SoundCanvas.prototype={
+		attachSource:function(context,audioInput){
+
+		},
+		newlistener:function(){
+
+		}
+	}
+
 	var SoundWave=function(){
 
 	};
-	SoundWave.prototype=function(){
+	SoundWave.prototype={
 
 	};
 
+	//ultrasound
+	(function(window){
+		
+	})(window);
+
 	//speech recognition
 	(function(window){
-		var _sessionKey='myVoixData',
-			_voiceRecognition = window.webkitSpeechRecognition;
+		var _sessionKey='myVoixData';
 
 		var MyVoix=function(config,keyList,isLoop){
-			var _smartLearning = new Learning(_sessionKey);
-			this.Dic= new SmartDic(_smartLearning,keyList);
+			this.SmartLearning = new Learning(_sessionKey);
+			this.Dic= new SmartDic(this.SmartLearning,keyList);
 			this.Dic.init();
 			this.createRecognition(config);
 			this.IsLoop = isLoop;
-			this.CurrentLearning=undefined;
+			//this.CurrentLearning=undefined;
 			this.Recognition.start();
-			//
+			//can be override
 			this.onLearning=function(key){};
-			this.onlog=function(msg){};
-		};	
+			this.onLog=function(msg){};
+		};
+
+		//inherit class message
 		MyVoix.prototype = new Message();
 		MyVoix.prototype.constructor=MyVoix;
+
+		//add its own functions here
 		Core.extend(MyVoix.prototype,{
 			createRecognition:function(config){
-				this.Recognition = new _voiceRecognition();
+				this.Recognition = new VoiceRecognition();
 				var _default={
 					continuous:true,
 					interimResults:false,
@@ -213,9 +237,69 @@
 				Recognition has the following functions to be override
 				onstart,onresult,onerror,onend
                 */
+			},
+			start:function(){
+				var me = this;
+				me.Recognition.onresult=function(e){
+					me._result.call(me,e);
+				};
+				return me;
+			},
+			stop:function(){
+				this.Recognition.onresult = undefined;
+				return this;
+			},
+			startLearning:function(word){
+				this.CurrentLearning=word;
+			},
+			stopLearning:function(){
+				this.CurrentLearning=undefined;
+			}
+			_result:function(e){
+				var me =this,
+				reg=/^\s+|\s+$/g,
+				len = e.results.length,
+				i=e.resultIndex,
+				j=0,
+				listeners,//funcs
+				msg;
+				me.stop();
+				for(;i<len;i++){
+					if(e.results[i].isFinal){
+						//get word
+						msg = e.results[i][0].transcript.replace(reg,' ').toLowerCase();
+						console.log(msg);
+						me.onLog(msg);
+					}
+					if(me.CurrentLearning){
+						this.SmartLearning.learn(me.CurrentLearning,msg,me.Dic);
+					}else{
+						if(me.Lib[msg] === undefined){
+							msg = me.Dic.get(msg);
+						}
+						if(msg && me.Lib[msg]){
+							listeners = me.Lib[msg].listeners;
+							for(var name in listeners){
+								listeners[name].call();
+							}
+						}
+					}
+				}
+				me.IsLoop && me.start();
+			},
+			createSoundWave:function(config){
+
 			}
 		});
-
+		
+		//AMD
+		if(typeof window.define === 'function'){
+			define([],function(){
+				return MyVoix;
+			});
+		}else{
+			window.MyVoix = MyVoix;
+		}
 
 	})(window);
 
