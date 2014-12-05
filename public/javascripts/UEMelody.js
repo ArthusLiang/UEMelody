@@ -4,13 +4,10 @@
 * @CreateDate  2014/12/4
 */
 (function(window){
-<<<<<<< HEAD
 	var AudioContext = webkitAudioContext,
 		GetUserMedia = webkitGetUserMedia,
 		VoiceRecognition = webkitSpeechRecognition;
 
-=======
->>>>>>> FETCH_HEAD
    	var Core=new function(){
 		var _pkid=0;
 	   	/*
@@ -127,7 +124,7 @@
 
 
 	var Message=function(){
-		this.Lib={};//* store handles
+		this.Lib={};//* store handles functions
 		this.Dic={};//  store smart learning dictionary
 	};	
 	Message.prototype={
