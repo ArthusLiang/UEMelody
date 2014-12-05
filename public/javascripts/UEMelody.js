@@ -1,6 +1,6 @@
 /*
 * @namespace   UEMelody
-* @Author:     yulianghuang 
+* @Author:     yulianghuang
 * @CreateDate  2014/12/4
 */
 (function(window){
@@ -15,7 +15,7 @@
         * @return {number}
         */
 		this.getPkid=function(){
-			return _pkid;	
+			return _pkid;
 		};
         this.extend=function(target,source){
 			var args=[].slice.call(arguments),
@@ -32,9 +32,9 @@
 						target[key] =source[key];
 					}
 				}
-			} 		
-	    	return target;  
-		};	
+			}
+	    	return target;
+		};
 		this.isArray=function (obj) {
         	return Object.prototype.toString.call(obj) === '[object Array]';
         };
@@ -78,7 +78,7 @@
     		}
     	},
     	get:function(key){
-    		return this.Dic[key]; 
+    		return this.Dic[key];
     	},
     	set:function(key,value){
     		this.Dic[key]= value;
@@ -126,7 +126,7 @@
 	var Message=function(){
 		this.Lib={};//* store handles functions
 		this.Dic={};//  store smart learning dictionary
-	};	
+	};
 	Message.prototype={
 		bind:function(msg,func) {
 			if(!func.$pkid){
@@ -164,7 +164,7 @@
 				for(var name in handles){
 					handles[name]();
 				}
-			}	
+			}
 		},
 		one:function(msg,func){
 			var me =this,
@@ -199,7 +199,7 @@
 			//
 			this.onLearning=function(key){};
 			this.onlog=function(msg){};
-		};	
+		};
 		MyVoix.prototype = new Message();
 		MyVoix.prototype.constructor=MyVoix;
 		Core.extend(MyVoix.prototype,{
@@ -209,7 +209,7 @@
 					continuous:true,
 					interimResults:false,
 					lang:'en-US',
-					maxAlternatives:1				
+					maxAlternatives:1
 				};
 				Core.extend(_default,config,true);
 				Core.extend(this.Recognition,_default,true);
