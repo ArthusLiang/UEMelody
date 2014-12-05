@@ -1,20 +1,20 @@
 /*
-* @namespace   UEMelody
-* @Author:     yulianghuang
-* @CreateDate  2014/12/4
+* @namespace  UEMelody
+* @Author:    yulianghuang
+* @CreateDate 2014/12/4
 */
 (function(window){
-	var AudioContext = webkitAudioContext,
-		GetUserMedia = webkitGetUserMedia,
-		VoiceRecognition = webkitSpeechRecognition;
+    var AudioContext = webkitAudioContext,
+        GetUserMedia = webkitGetUserMedia,
+        VoiceRecognition = webkitSpeechRecognition;
 
-   	var Core=new function(){
-		var _pkid=0;
-	   	/*
+    var Core=new function(){
+        var _pkid=0;
+        /*
         * Get the global pkid
         * @return {number}
         */
-		this.getPkid=function(){
+        this.getPkid=function(){
 			return _pkid;
 		};
         this.extend=function(target,source){
@@ -41,7 +41,7 @@
         this.isEmptyObject=function(obj){
         	for(var name in obj){
         		return false;
-        	}
+            }
         	return true;
         };
    	};
@@ -50,44 +50,43 @@
 
 	//build relationship
     var SmartDic=function(){
-    	this.Dic={};
-
-    };
+    	           this.Dic={};
+        };
     SmartDic.prototype={
-    	//take data from database
-    	init:function(data,keyList){
-    		//look up some keys from data
-    		if(Core.isArray(keyList)){
-    			for(var i=0,l=keyList.length;i<l;i++){
-    				var _name =keyList[i];
-    					_cmd = data[_name];
-    				if(_cmd!=null){
-    					for(var name in _cmd){
-    						this.Dic[name] =_name;
-    					}
-    				}
-    			}
-    		//take all
-    		}else{
-    			for(var _i in data){
-    				var _cmd = data[_i];
-    				for(var name in _cmd){
-    					this.Dic[name] = _i;
-    				}
-    			}
-    		}
-    	},
-    	get:function(key){
-    		return this.Dic[key];
-    	},
-    	set:function(key,value){
-    		this.Dic[key]= value;
-    	},
-    	remove:function(key,value){
-    		if(value != null && this.Dic[key] == value){
-    			delete this.Dic[key];
-    		}
-    	}
+        //take data from database
+        init:function(data,keyList){
+        	//look up some keys from data
+        	if(Core.isArray(keyList)){
+        		for(var i=0,l=keyList.length;i<l;i++){
+        			var _name =keyList[i];
+        				_cmd = data[_name];
+        			if(_cmd!=null){
+        				for(var name in _cmd){
+        					this.Dic[name] =_name;
+        				}
+        			}
+        		}
+        	//take all
+        	}else{
+        		for(var _i in data){
+        			var _cmd = data[_i];
+        			for(var name in _cmd){
+        				this.Dic[name] = _i;
+        			}
+        		}
+        	}
+        },
+        get:function(key){
+        	return this.Dic[key];
+        },
+        set:function(key,value){
+        	this.Dic[key]= value;
+        },
+        remove:function(key,value){
+        	if(value != null && this.Dic[key] == value){
+                delete this.Dic[key];
+            }
+        }
     };
     var Learning =function(sessionKey){
     	this.SessionKey = sessionKey;
