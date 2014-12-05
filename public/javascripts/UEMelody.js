@@ -6,7 +6,7 @@
 (function(window){
 	var AudioContext = webkitAudioContext,
 		GetUserMedia = webkitGetUserMedia,
-				VoiceRecognition = webkitSpeechRecognition;
+		VoiceRecognition = webkitSpeechRecognition;
 
    	var Core=new function(){
 		var _pkid=0;
