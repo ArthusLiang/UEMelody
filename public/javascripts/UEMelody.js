@@ -6,11 +6,11 @@
 (function(window){
     //ff
 	var AudioContext = webkitAudioContext,
-		GetUserMedia = webkitGetUserMedia,
-		VoiceRecognition = webkitSpeechRecognition,
-        requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function(callback,el){
-            return setTimeout(callback,1000/60);
-        };
+		    GetUserMedia = webkitGetUserMedia,
+		    VoiceRecognition = webkitSpeechRecognition,
+            requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function(callback,el){
+                return setTimeout(callback,1000/60);
+            };
 
    	var UEMelody={},
         Core=new function(){
