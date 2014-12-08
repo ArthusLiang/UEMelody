@@ -4,11 +4,16 @@
 * @CreateDate  2014/12/4
 */
 (function(window){
+    //ff
 	var AudioContext = webkitAudioContext,
 		GetUserMedia = webkitGetUserMedia,
-				VoiceRecognition = webkitSpeechRecognition;
+		VoiceRecognition = webkitSpeechRecognition,
+        requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function(callback,el){
+            return setTimeout(callback,1000/60);
+        };
 
-   	var Core=new function(){
+   	var UEMelody={},
+        Core=new function(){
 		var _pkid=0;
 	   	/*
         * Get the global pkid
@@ -43,6 +48,9 @@
         		return false;
         	}
         	return true;
+        };
+        this.define =function(name,deps,factory){
+            UEMelody[name] =factory;
         };
    	};
 
@@ -176,24 +184,47 @@
 		}
 	};
 
-	var SoundCanvas=function(){
+    /*
+    * @namespace   SonicVisual
+    * @Author:     yulianghuang
+    * @CreateDate  2014/12/4
+    * @Desciption  Use sound to transform data
+    */
+    (function(){
+        var painter={
+            line:function(canvas,data){
 
-	};
-	SoundCanvas.prototype={
-		attachSource:function(context,audioInput){
+            },
+            rectangle:function(canvas,data){
 
-		},
-		newlistener:function(){
+            },
+            round:function(canvas,data){
 
-		}
-	}
+            }
+        };
 
-	var SoundWave=function(){
+        var SonicVisual = function(){
 
-	};
-	SoundWave.prototype={
+        };
+        SonicVisual.prototype=function(){
+            attach:function(canvas,input){
 
-	};
+            },
+            start:function(){
+
+            },
+            stop:function(){
+
+            },
+            draw:function(){
+
+            },
+            initCanvas:function(){
+
+            }
+        };
+
+    })();
 
     /*
     * @namespace   Sonic
@@ -249,8 +280,8 @@
             this.Dic = this.CharStart +this.CharDic + this.CharEnd;
             this.DicLength = this.Dic.length;
 
-            this.FreqMin = opt.FreqMin || 17000;
-            this.FreqMax = opt.FreqMax || 19000;
+            this.FreqMin = opt.FreqMin || 20000;
+            this.FreqMax = opt.FreqMax || 22000;
             this.FreqError = opt.FreqError || 50;
             this.FreqStep =(this.FreqMax-this.FreqMin)/ this.DicLength;
 
@@ -593,7 +624,12 @@
 
 	})(window);
 
-	//speech recognition
+    /*
+    * @namespace   MyVoix
+    * @Author:     yulianghuang
+    * @CreateDate  2014/12/8
+    * @Desciption  Change sound to language
+    */
 	(function(window){
 		var _sessionKey='myVoixData';
 
@@ -685,15 +721,18 @@
 			}
 		});
 
-		//AMD
-		if(typeof window.define === 'function'){
-			define([],function(){
-				return MyVoix;
-			});
-		}else{
-			window.MyVoix = MyVoix;
-		}
+        //AMD
+        Core.define('MyVoix',[],MyVoix);
 
 	})(window);
+
+    //define
+    if(typeof window.define === 'function'){
+        define([],function(){
+            return UEMelody;
+        });
+    }else{
+        window.UEMelody = UEMelody;
+    }
 
 })(window);
