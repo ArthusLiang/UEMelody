@@ -7,9 +7,8 @@ router.get('/', function(req, res) {
 });
 
 router.get('/test', function(req, res) {
-  res.render('./pages/test', {title:'Test'});
+  res.render('./pages/test', {title:'SuperSonic Testing Page'});
 });
 
 
 module.exports = router;
-	

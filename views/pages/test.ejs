@@ -3,15 +3,48 @@
   <head>
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <% include ../partials/using %>
-    <script type="text/javascript" src='/javascripts/UEMelody.js'></script>
+    <script type="text/javascript" src='/javascripts/SonicPainter.js'></script>
     <script type="text/javascript">
 	    window.onload=function(argument){
-	    	// body...
-	    }
+	        var cvs1=document.getElementById('cvs1'),
+            cvs2=document.getElementById('cvs2'),
+            btn=document.getElementById('btnStart');
+          var sonicPainter = new SonicPainter();
+          navigator.webkitGetUserMedia({audio:true},function(e){
+            var context = new webkitAudioContext(),
+              audioInput = context.createMediaStreamSource(e),
+              analyser = context.createAnalyser();
+              audioInput.connect(analyser);
+              analyser.connect(context.destination);
+
+              sonicPainter.attach(cvs1,analyser,{
+                func:'rectangle',
+                config:{}
+              });
+              sonicPainter.attach(cvs2,analyser,{
+                func:'line',
+                config:{}
+              });
+
+          },function(){});
+
+          btn.onclick=function(){
+            if(btn.innerHTML=='start'){
+              btn.innerHTML='stop';
+              sonicPainter.start();
+            }else{
+              btn.innerHTML='start';
+              sonicPainter.stop();
+            }
+          };
+	    };
     </script>
   </head>
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
+    <p><a id='btnStart'>start</a></p>
+    <canvas id='cvs1' width=800 height=400></canvas>
+    <canvas id='cvs2' width=800 height=400></canvas>
   </body>
 </html>

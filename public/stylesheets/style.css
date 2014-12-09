@@ -6,3 +6,5 @@ body {
 a {
   color: #00B7FF;
 }
+
+canvas{background:black; display: inline-block; margin: 20px;}

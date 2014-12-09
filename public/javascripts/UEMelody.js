@@ -6,7 +6,7 @@
 (function(window){
     //ff
 	var AudioContext = webkitAudioContext,
-		    GetUserMedia = webkitGetUserMedia,
+		      GetUserMedia =navigator.GetUserMedia || navigator.webkitGetUserMedia|| navigator.mozGetUserMedia|| navigator.msGetUserMedia,
 		    VoiceRecognition = webkitSpeechRecognition,
             requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function(callback,el){
                 return setTimeout(callback,1000/60);
@@ -20,7 +20,7 @@
         * @return {number}
         */
 		this.getPkid=function(){
-			return _pkid;
+			return _pkid++;
 		};
         this.extend=function(target,source){
 			var args=[].slice.call(arguments),
@@ -191,38 +191,6 @@
     * @Desciption  Use sound to transform data
     */
     (function(){
-        var painter={
-            line:function(canvas,data){
-
-            },
-            rectangle:function(canvas,data){
-
-            },
-            round:function(canvas,data){
-
-            }
-        };
-
-        var SonicVisual = function(){
-
-        };
-        SonicVisual.prototype=function(){
-            attach:function(canvas,input){
-
-            },
-            start:function(){
-
-            },
-            stop:function(){
-
-            },
-            draw:function(){
-
-            },
-            initCanvas:function(){
-
-            }
-        };
 
     })();
 
@@ -382,7 +350,7 @@
 
 
         SonicAccepter.prototype = new Message();
-        SonicAccepter.prototype.constructor=MyVoix;
+        SonicAccepter.prototype.constructor=SonicAccepter;
 
         Core.extend(SonicAccepter.prototype,{
             start:function(){
@@ -683,7 +651,7 @@
 			},
 			stopLearning:function(){
 				this.CurrentLearning=undefined;
-			}
+			},
 			_result:function(e){
 				var me =this,
 				reg=/^\s+|\s+$/g,
