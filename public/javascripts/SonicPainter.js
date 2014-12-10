@@ -82,17 +82,76 @@
                 return sum/(end-start);
             };
 
+            this.DefaultConfig={}
+
+            Core.extend(this.DefaultConfig,{
+                line:{
+                    Default:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XStep:2,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:1,
+                            StrokeStyle:_defaultColor,
+                            LineWidth :2
+                        };
+                    },
+                    FT:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XStep:4,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:200,
+                            StrokeStyle:_defaultColor,
+                            LineWidth :2
+                        };
+                    },
+                    BT:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XStep:2,
+                            YMid:canvas.height/2,
+                            YAdjust:canvas.height/3,
+                            YRate:1,
+                            StrokeStyle:_defaultColor,
+                            LineWidth :2
+                        };
+                    },
+                    FF:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XStep:4,
+                            YMid:canvas.height/2,
+                            YAdjust:-canvas.height/4,
+                            YRate:1,
+                            StrokeStyle:_defaultColor,
+                            LineWidth :2
+                        };
+                    },
+                    BF:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XStep:4,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:1,
+                            StrokeStyle:_defaultColor,
+                            LineWidth :2
+                        };
+                    }
+                }
+            });
+
             //public function
-            this.line=function(canvas,data,config){
-                mergeConfig({
-                    X1:0,
-                    X2:canvas.width,
-                    XStep:4,
-                    YMid:canvas.height/2,
-                    YAdjust:-100,
-                    StrokeStyle:_defaultColor,
-                    LineWidth :2
-                },config,function(){
+            this.line=function(canvas,data,config,keyname){
+                mergeConfig(this.DefaultConfig.line[keyname||'Default'](canvas),config,function(){
                     config._stepWidth = (config.X2-config.X1)/data.length;
                     config._base = config.YAdjust+config.YMid;
                 });
@@ -100,26 +159,84 @@
                 var _ctx = canvas._context,
                     _step =config.XStep,
                     _base = config._base,
-                    _stepWidth =  config._stepWidth;
+                    _stepWidth =  config._stepWidth,
+                    _rate = config.YRate;
                 _ctx.strokeStyle = config.StrokeStyle;
                 _ctx.lineWidth =config.LineWidth;
-                _ctx.moveTo(config.X1,_base-data[0]);
+                _ctx.moveTo(config.X1,_base-data[0]*_rate);
                 for(var i=_step,l=data.length;i<l;i+=_step){
-                    _ctx.lineTo(i*_stepWidth,_base-data[i]);
+                    _ctx.lineTo(i*_stepWidth,_base-data[i]*_rate);
                 }
                 _ctx.stroke();
             };
 
-            this.rectangle=function(canvas,data,config){
-                mergeConfig({
-                    X1:0,
-                    X2:canvas.width,
-                    XNum:64,
-                    XGap:4,
-                    YMid:canvas.height/2,
-                    YAdjust:-100,
-                    FillStyle:_defaultColor
-                },config,function(){
+            Core.extend(this.DefaultConfig,{
+                rectangle:{
+                    Default:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XNum:64,
+                            XGap:4,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:1,
+                            FillStyle:_defaultColor
+                        };
+                    },
+                    FT:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XNum:64,
+                            XGap:4,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:200,
+                            FillStyle:_defaultColor
+                        };
+                    },
+                    BT:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XNum:64,
+                            XGap:4,
+                            YMid:canvas.height/2,
+                            YAdjust:canvas.height/3,
+                            YRate:1,
+                            FillStyle:_defaultColor
+                        };
+                    },
+                    FF:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XNum:64,
+                            XGap:4,
+                            YMid:canvas.height/2,
+                            YAdjust:-canvas.height/4,
+                            YRate:1,
+                            FillStyle:_defaultColor
+                        };
+                    },
+                    BF:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            XNum:64,
+                            XGap:4,
+                            YMid:canvas.height/2,
+                            YAdjust:0,
+                            YRate:1,
+                            FillStyle:_defaultColor
+                        };
+                    }
+                }
+            });
+
+            this.rectangle=function(canvas,data,config,keyname){
+                mergeConfig(this.DefaultConfig.rectangle[keyname||'Default'](canvas),config,function(){
                     config._dataWidth=data.length/config.XNum;
                     config._stepWidth=(config.X2-config.X1)/config.XNum;
                     config._rectWidth= Math.floor(config._stepWidth-config.XGap);
@@ -132,6 +249,7 @@
                     _base =config._base,
                     _xNum = config.XNum,
                     _xGap = config.XGap/2,
+                    _rate = config.YRate,
                     _y,
                     i,j,loc,sum;
 
@@ -140,7 +258,7 @@
                     loc =i*_dataWidth;
                     sum=0;
                     for(j=0;j<_dataWidth;j++){
-                        sum+=data[loc+j];
+                        sum+=data[loc+j]*_rate;
                     }
                     _y=_base-sum/_dataWidth;
                     _ctx.fillRect(i*_stepWidth+_xGap,_y,_rectWidth,canvas.height-_y);
@@ -381,8 +499,8 @@
                                 _obj = _objs[_name];
                                 //if render this config
                                 if(_obj.IfRender){
-                                    //render it
-                                    painters[_obj.func](canvas,_receiver.Data[_name],_obj.config);
+                                    //render it ------------------------------- here to call the painter -----------------------------------
+                                    painters[_obj.func](canvas,_receiver.Data[_name],_obj.config,_name);
                                 }
                             }
                         }
