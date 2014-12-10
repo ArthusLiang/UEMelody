@@ -8,6 +8,8 @@
 	    window.onload=function(argument){
 	        var cvs1=document.getElementById('cvs1'),
             cvs2=document.getElementById('cvs2'),
+            cvs3=document.getElementById('cvs3'),
+            cvs4=document.getElementById('cvs4'),
             btn=document.getElementById('btnStart');
           var sonicPainter = new SonicPainter();
           navigator.webkitGetUserMedia({audio:true},function(e){
@@ -17,14 +19,10 @@
               audioInput.connect(analyser);
               analyser.connect(context.destination);
 
-              sonicPainter.attach(cvs1,analyser,{
-                func:'rectangle',
-                config:{}
-              });
-              sonicPainter.attach(cvs2,analyser,{
-                func:'line',
-                config:{}
-              });
+              sonicPainter.attach(cvs1,analyser,{'FF':{func:'line'}});
+              sonicPainter.attach(cvs2,analyser,{'FT':{func:'line'}});
+              sonicPainter.attach(cvs3,analyser,{'BF':{func:'line'}});
+              sonicPainter.attach(cvs4,analyser,{'BT':{func:'line'}});
 
           },function(){});
 
@@ -46,5 +44,7 @@
     <p><a id='btnStart'>start</a></p>
     <canvas id='cvs1' width=800 height=400></canvas>
     <canvas id='cvs2' width=800 height=400></canvas>
+    <canvas id='cvs3' width=800 height=400></canvas>
+    <canvas id='cvs4' width=800 height=400></canvas>
   </body>
 </html>

@@ -148,26 +148,52 @@
             };
 
             //siri wave line
-            var _wave_drawline=function(canvas,config,index){
-                var _ctx = canvas._context,
-                    _attenuation = config.Attenuation[index],
-                    x,y;
-                _ctx.strokeStyle = ['rgba(', config.StrokeStyle,',',_attenuation[1],'-)'].join('');
-                _ctx.lineWidth = _attenuation[2];
-                _ctx.stroke();
-            };
+            var _wave_cache_GATF={},
+                _wave_drawline_GATF=function(x){
+                    if(_wave_cache_GATF[x] == null){
+                        _wave_cache_GATF[x] = Math.pow(4/(4+Math.pow(x,4)),2);
+                    }
+                    return _wave_cache_GATF[x];
+                },
+                _wave_drawline_x=function(config,i){
+                    return config.X1+config._width*((i+config.K)/(config.K*2));
+                },
+                _wave_drawline_y=function(config,i){
+                    return config.Height/2+_wave_drawline_GATF(i)*(config._max * config.Alpha/config.Attenuation[0])*Math.sin(config.F*i+config.Phase);
+                },
+                _wave_drawline=function(canvas,config,index){
+                    var _ctx = canvas._context,
+                        _attenuation = config.Attenuation[index],
+                        _k= config.K,
+                        x,y,i;
+                    _ctx.strokeStyle = ['rgba(', config.StrokeStyle,',',_attenuation[1],'-)'].join('');
+                    _ctx.lineWidth = _attenuation[2];
+
+                    i=-_k;
+                    _ctx.moveTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i));
+
+                    for(i+=0.01;i<=_k;i+=0.01){
+                        _ctx.lineTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i));
+                    }
+                    _ctx.stroke();
+                };
             this.wave=function(canvas,data,config){
                 mergeConfig({
+                    X1:0,
+                    X2:canvas.width,
                     Attenuation:[[-2,0.1,1],[-6,0.2,1],[4,0.4,1],[2,0.6,1],[1,1,1.5]],
                     K:2,
                     Phase:0,
                     Noise:1,
-                    Speed:0.1,
-                    Alpha:0.8,
-                    F:2,
-                    Max:canvas.height/2-4,
+                    Alpha:1,
+                    Speed:0.2,
+                    F:6,
+                    Height:canvas.height,
                     StrokeStyle:hex2rgb(_defaultColor)
-                },config);
+                },config,function(){
+                    config._width = config.X2-config.X1;
+                    config._max = config.Height/2-4;
+                });
                 var _average = getAverage(data),
                     _alpha = config.Alpha;
 
@@ -177,8 +203,8 @@
                     config.Noise = Math.min(_alpha * config.Noise + (1-_alpha) * (_average*10),1);
                     config.F = 2+(_average/100) * 3;
                 }
-
-                for(var i=0,l=_attenuationArr.length;i<l;i++){
+                config.phase = (config.phase+config.speed)%(Math.PI*2);
+                for(var i=0,l=config.Attenuation.length;i<l;i++){
                     _wave_drawline(canvas,config,i);
                 }
             };
@@ -192,23 +218,117 @@
 
         };
 
+        /*
+        * Receiver to control the data
+        */
+        var SonicDataReceiver=function(analyser){
+            this.Analyser = analyser;
+            this.Data={};
+            this.UEMelodyID = analyser.UEMelodyID;
+        };
+        SonicDataReceiver.prototype={
+            reflashData:function(name){
+                this._loopFunc('_get');
+            },
+            init:function(name){
+                this._init[name](this.Data,this.Analyser);
+            },
+            implement:function(obj){
+                var _prototype=SonicDataReceiver.prototype;
+                _prototype._get[obj.Name] = obj._get;
+                _prototype._init[obj.Name] = obj._init;
+            },
+            getNewData:function(){
+
+            },
+            _getNewData:function(){
+
+            },
+            _get:{
+                FT:function(data,analyser){
+                    analyser.getFloatTimeDomainData(data);
+                },
+                BT:function(data,analyser){
+                    analyser.getByteTimeDomainData(data);
+                },
+                FF:function(data,analyser){
+                    analyser.getFloatFrequencyData(data);
+                },
+                BF:function(data,analyser){
+                    analyser.getByteFrequencyData(data);
+                }
+            },
+            _init:{
+                FT:function(data,analyser){
+                    if(data.FT === undefined){
+                        data.FT = new Float32Array(analyser.fftSize);
+                    }
+                },
+                BT:function(data,analyser){
+                    if(data.BT === undefined){
+                        data.BT = new Uint8Array(analyser.fftSize);
+                    }
+                },
+                FF:function(data,analyser){
+                    if(data.FF === undefined){
+                        data.FF = new Float32Array(analyser.frequencyBinCount);
+                    }
+                },
+                BF:function(data,analyser){
+                    if(data.BF === undefined){
+                        data.BF = new Uint8Array(analyser.frequencyBinCount);
+                    }
+                }
+            },
+            _loopFunc:function(func){
+                var me = this,
+                    _data = me.Data,
+                    _analyser = me.Analyser;
+                for(var name in _data){
+                    me[func][name].call(me,_data[name],_analyser);
+                }
+            }
+        };
+
         var SonicPainter = function(){
             this.CanvasList = {};
-            this.AnalyserList = {};
+            this.DataReceiverList={};
             this.IfRender = false;
         };
 
         SonicPainter.prototype={
-            _initObj:function(obj,storeName){
-                //!obj.UEMelodyID && (obj.UEMelodyID = Core.getPkid());
-                if(!obj.UEMelodyID){
-                    obj.UEMelodyID = Core.getPkid();
-                    obj.UEMelodyArr ={};
-                    obj.IfRender =true;
+            _initObj:function(obj,store,factory){
+                var me = this,
+                    _storeList = this[store],
+                    _id,
+                    sbj;
+                //init id
+                obj.UEMelodyID === undefined && (obj.UEMelodyID = Core.getPkid());
+                _id = obj.UEMelodyID;
+
+                //store
+                if(_storeList[_id] === undefined){
+                    //new obj
+                    if(typeof factory == 'function'){
+                        sbj = new factory(obj);
+                    }else{
+                        sbj = obj;
+                    }
+                    sbj.UEMelodyArr ={};
+                    sbj.IfRender =true;
+                    _storeList[_id]=sbj;
+                }else{
+                   sbj = _storeList[_id];
                 }
-                var _storeList = this[storeName];
-                if(!_storeList[obj.UEMelodyID]){
-                    _storeList[obj.UEMelodyID]=obj;
+
+                return sbj;
+            },
+            _initRenderObj:function(renderObj){
+                var _point;
+                for(var name in renderObj){
+                    _point = renderObj[name];
+                    _point.config === undefined && (_point.config = {});
+                    _point.IfRender = true;
                 }
             },
             _matchObj:function(obj,sbj,renderObj){
@@ -219,35 +339,53 @@
                 delete obj.UEMelodyArr[sbj.UEMelodyID];
                 delete sbj.UEMelodyArr[obj.UEMelodyID];
             },
+            /*
+            @param renderObj {
+                FF:{func:'rectangle',config:{},isRender:true},
+                FB:{func:'line',config:{},isRender:true}
+            }
+            */
             attach:function(canvas,analyser,renderObj){
-                var me = this;
+                var me = this,
+                    _reveicer = me._initObj(analyser,'DataReceiverList',SonicDataReceiver);
                 me._initObj(canvas,'CanvasList');
-                me._initObj(analyser,'AnalyserList');
-                me._matchObj(canvas,analyser,renderObj);
+                me._initRenderObj(renderObj);
+                //init the render way
+                for(var name in renderObj){
+                    _reveicer.init(name);
+                }
+                //store context
                 canvas._context = canvas.getContext('2d');
-                analyser.UEMelodyData = new Float32Array(analyser.frequencyBinCount);
+                //build the relationship
+                me._matchObj(canvas,_reveicer,renderObj);
             },
             clearCanvas:function(canvas){
-                /* clearRect not work...oh my god
-                var _ctx = canvas._context;
-                 _ctx.globalCompositeOperation = 'destination-out';
-                 _ctx.clearRect(0,0,canvas.width,canvas.height);
-                 _ctx.globalCompositeOperation = 'source-over';
-                 */
-                 canvas.width=canvas.width;
+                // _ctx.clearRect(0,0,canvas.width,canvas.height); not work...oh my god
+                canvas.width=canvas.width;
             },
             _drawCanvas:function(canvas){
                 if(canvas.IfRender){
                     this.clearCanvas(canvas);
-                    var _analyserList = this.AnalyserList,
-                        _arr=canvas.UEMelodyArr,
-                        _analyserNode,
-                        _renderObj;
-                    for(var id in _arr){
-                        //global function
-                        _analyserNode=_analyserList[id];
-                        _renderObj =_arr[id];
-                        _analyserNode.IfRender && painters[_renderObj.func](canvas,_analyserNode.UEMelodyData,_renderObj.config);
+                    var _receiverList = this.DataReceiverList,
+                        _idList=canvas.UEMelodyArr,
+                        _receiver,
+                        _objs,
+                        _name,
+                        _obj;
+                    for(var _id in _idList){
+                        _receiver=_receiverList[_id];
+                        //if render this receiver
+                        if(_receiver.IfRender){
+                            _objs =_idList[_id];
+                            for(_name in _objs){
+                                _obj = _objs[_name];
+                                //if render this config
+                                if(_obj.IfRender){
+                                    //render it
+                                    painters[_obj.func](canvas,_receiver.Data[_name],_obj.config);
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -256,14 +394,20 @@
                 if(this.IfRender){
                     //prepare data
                     var me=this,
+                        _receiverList = me.DataReceiverList,
                         _analyserList = me.AnalyserList,
                         _canvasList = me.CanvasList,
                         _canvas;
-                    for(var id in _analyserList){
-                        _analyserList[id].getFloatFrequencyData(_analyserList[id].UEMelodyData);
+
+                    //get data from analyser node
+                    for(var id in _receiverList)
+                    {
+                        _receiverList[id].reflashData();
                     }
+
                     //drawCanvas
                     for(var id in _canvasList){
+                        //rener canvas one by one
                         me._drawCanvas(_canvasList[id]);
                     }
                     requestAnimationFrame(function(){
