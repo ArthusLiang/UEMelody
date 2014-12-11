@@ -72,6 +72,14 @@
                     callback && callback();
                 }
             },
+            initConfig=function(canvas,option,name,config,callback){
+                if(!config.If1st){
+                    name && Core.extend(config,option[name](canvas),false);
+                    Core.extend(config,option.Default(canvas),false);
+                    config.If1st=true;
+                    callback && callback();
+                }
+            },
             getAverage=function(arr,start,end){
                 var sum=0,
                     start = start || 0,
@@ -92,58 +100,34 @@
                             X2:canvas.width,
                             XStep:2,
                             YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:1,
+                            Base:0,
+                            Rate:1,
                             StrokeStyle:_defaultColor,
                             LineWidth :2
                         };
                     },
                     FT:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XStep:4,
-                            YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:200,
-                            StrokeStyle:_defaultColor,
-                            LineWidth :2
+                            Base:0,
+                            Rate:200
                         };
                     },
                     BT:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XStep:2,
-                            YMid:canvas.height/2,
-                            YAdjust:canvas.height/3,
-                            YRate:1,
-                            StrokeStyle:_defaultColor,
-                            LineWidth :2
+                            Base:canvas.height/3,
+                            Rate:1
                         };
                     },
                     FF:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XStep:4,
-                            YMid:canvas.height/2,
-                            YAdjust:-canvas.height/4,
-                            YRate:1,
-                            StrokeStyle:_defaultColor,
-                            LineWidth :2
+                            Base:-canvas.height/4,
+                            Rate:1
                         };
                     },
                     BF:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XStep:4,
-                            YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:1,
-                            StrokeStyle:_defaultColor,
-                            LineWidth :2
+                            Base:0,
+                            Rate:1
                         };
                     }
                 }
@@ -151,16 +135,17 @@
 
             //public function
             this.line=function(canvas,data,config,keyname){
-                mergeConfig(this.DefaultConfig.line[keyname||'Default'](canvas),config,function(){
+                initConfig(canvas,this.DefaultConfig.line,keyname,config,function(){
                     config._stepWidth = (config.X2-config.X1)/data.length;
-                    config._base = config.YAdjust+config.YMid;
+                    config._base = config.Base+config.YMid;
                 });
 
                 var _ctx = canvas._context,
                     _step =config.XStep,
                     _base = config._base,
                     _stepWidth =  config._stepWidth,
-                    _rate = config.YRate;
+                    _rate = config.Rate;
+                _ctx.beginPath();
                 _ctx.strokeStyle = config.StrokeStyle;
                 _ctx.lineWidth =config.LineWidth;
                 _ctx.moveTo(config.X1,_base-data[0]*_rate);
@@ -168,6 +153,7 @@
                     _ctx.lineTo(i*_stepWidth,_base-data[i]*_rate);
                 }
                 _ctx.stroke();
+                _ctx.closePath();
             };
 
             Core.extend(this.DefaultConfig,{
@@ -179,69 +165,46 @@
                             XNum:64,
                             XGap:4,
                             YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:1,
+                            Base:0,
+                            Rate:1,
                             FillStyle:_defaultColor
                         };
                     },
                     FT:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XNum:64,
-                            XGap:4,
-                            YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:200,
-                            FillStyle:_defaultColor
+                            Base:0,
+                            Rate:200
                         };
                     },
                     BT:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XNum:64,
-                            XGap:4,
-                            YMid:canvas.height/2,
-                            YAdjust:canvas.height/3,
-                            YRate:1,
-                            FillStyle:_defaultColor
+                            Base:canvas.height/3,
+                            Rate:1
                         };
                     },
                     FF:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XNum:64,
-                            XGap:4,
-                            YMid:canvas.height/2,
-                            YAdjust:-canvas.height/4,
-                            YRate:1,
-                            FillStyle:_defaultColor
+                            Base:-canvas.height/4,
+                            Rate:1
                         };
                     },
                     BF:function(canvas){
                         return {
-                            X1:0,
-                            X2:canvas.width,
-                            XNum:64,
-                            XGap:4,
-                            YMid:canvas.height/2,
-                            YAdjust:0,
-                            YRate:1,
-                            FillStyle:_defaultColor
+                            Base:0,
+                            Rate:1
                         };
                     }
                 }
             });
 
             this.rectangle=function(canvas,data,config,keyname){
-                mergeConfig(this.DefaultConfig.rectangle[keyname||'Default'](canvas),config,function(){
+                initConfig(canvas,this.DefaultConfig.rectangle,keyname,config,function(){
                     config._dataWidth=data.length/config.XNum;
                     config._stepWidth=(config.X2-config.X1)/config.XNum;
                     config._rectWidth= Math.floor(config._stepWidth-config.XGap);
-                    config._base = config.YAdjust+config.YMid;
-                })
+                    config._base = config.Base+config.YMid;
+                });
+
                 var _ctx = canvas._context,
                     _dataWidth = config._dataWidth,
                     _stepWidth = config._stepWidth,
@@ -249,10 +212,11 @@
                     _base =config._base,
                     _xNum = config.XNum,
                     _xGap = config.XGap/2,
-                    _rate = config.YRate,
+                    _rate = config.Rate,
                     _y,
                     i,j,loc,sum;
 
+                _ctx.beginPath();
                 _ctx.fillStyle = config.FillStyle;
                 for(i=0;i<_xNum;i+=1){
                     loc =i*_dataWidth;
@@ -263,7 +227,50 @@
                     _y=_base-sum/_dataWidth;
                     _ctx.fillRect(i*_stepWidth+_xGap,_y,_rectWidth,canvas.height-_y);
                 }
+                _ctx.closePath();
             };
+
+            Core.extend(this.DefaultConfig,{
+                wave:{
+                    Default:function(canvas){
+                        return {
+                            X1:0,
+                            X2:canvas.width,
+                            Attenuation:[[-2,0.2,1],[-6,0.3,1],[4,0.4,1],[2,0.6,1],[1,1,1.5]],
+                            K:2,
+                            Phase:0,
+                            Noise:0.01,
+                            Alpha:0.8,
+                            Speed:0.2,
+                            F:2,
+                            Height:canvas.height,
+                            YMid:canvas.height/2,
+                            Rate:1,
+                            StrokeStyle:hex2rgb(_defaultColor)
+                        };
+                    },
+                    FT:function(canvas){
+                        return {
+                            Rate:1000
+                        };
+                    },
+                    BT:function(canvas){
+                        return {
+                            Rate:0.5
+                        };
+                    },
+                    FF:function(canvas){
+                        return {
+                            Rate:0.5
+                        };
+                    },
+                    BF:function(canvas){
+                        return {
+                            Rate:1
+                        };
+                    }
+                }
+            });
 
             //siri wave line
             var _wave_cache_GATF={},
@@ -276,62 +283,110 @@
                 _wave_drawline_x=function(config,i){
                     return config.X1+config._width*((i+config.K)/(config.K*2));
                 },
-                _wave_drawline_y=function(config,i){
-                    return config.Height/2+_wave_drawline_GATF(i)*(config._max * config.Alpha/config.Attenuation[0])*Math.sin(config.F*i+config.Phase);
+                _wave_drawline_y=function(config,i,att){
+                    return config.YMid+att*Math.sin(config.F*i+config.Phase)*_wave_drawline_GATF(i);
                 },
                 _wave_drawline=function(canvas,config,index){
                     var _ctx = canvas._context,
-                        _attenuation = config.Attenuation[index],
+                        _attenuation =config.Attenuation[index],
+                        _opacity = _attenuation[1],
                         _k= config.K,
+                        _att=config.Rate*(config.Noise/_attenuation[0])*config._max,
                         x,y,i;
-                    _ctx.strokeStyle = ['rgba(', config.StrokeStyle,',',_attenuation[1],'-)'].join('');
+
+                    _ctx.beginPath();
+                    _ctx.strokeStyle = ['rgba(', config.StrokeStyle,',',_opacity,')'].join('');
                     _ctx.lineWidth = _attenuation[2];
 
                     i=-_k;
-                    _ctx.moveTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i));
+                    _ctx.moveTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i,_att));
 
                     for(i+=0.01;i<=_k;i+=0.01){
-                        _ctx.lineTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i));
+                        _ctx.lineTo(_wave_drawline_x(config,i),_wave_drawline_y(config,i,_att));
                     }
                     _ctx.stroke();
+                    _ctx.closePath();
                 };
-            this.wave=function(canvas,data,config){
-                mergeConfig({
-                    X1:0,
-                    X2:canvas.width,
-                    Attenuation:[[-2,0.1,1],[-6,0.2,1],[4,0.4,1],[2,0.6,1],[1,1,1.5]],
-                    K:2,
-                    Phase:0,
-                    Noise:1,
-                    Alpha:1,
-                    Speed:0.2,
-                    F:6,
-                    Height:canvas.height,
-                    StrokeStyle:hex2rgb(_defaultColor)
-                },config,function(){
+            this.wave=function(canvas,data,config,keyname){
+                initConfig(canvas,this.DefaultConfig.wave,keyname,config,function(){
                     config._width = config.X2-config.X1;
                     config._max = config.Height/2-4;
                 });
-                var _average = getAverage(data),
-                    _alpha = config.Alpha;
 
-                //set arguments with data
-                if(_average>0){
-                    var _now = _noise;
-                    config.Noise = Math.min(_alpha * config.Noise + (1-_alpha) * (_average*10),1);
-                    config.F = 2+(_average/100) * 3;
-                }
-                config.phase = (config.phase+config.speed)%(Math.PI*2);
+                var _average = getAverage(data);
+
+                config.Phase = (config.Phase + config.Speed)%(Math.PI *64)
+                config.Noise = config.Alpha * config.Noise + (1-config.Alpha) * (_average/100);
+                config.F = 2+(_average/100) * 3;
+
                 for(var i=0,l=config.Attenuation.length;i<l;i++){
                     _wave_drawline(canvas,config,i);
                 }
             };
 
-            this.cricle=function(canvas,data,config){
-                mergeConfig({
+            Core.extend(this.DefaultConfig,{
+                cricle:{
+                    Default:function(canvas){
+                        var _radius = Math.min(canvas.width,canvas.height)/8;
+                        return {
+                            XMid:canvas.width/2,
+                            YMid:canvas.height/2,
+                            Radius:_radius,
+                            Rate:Math.round(_radius/30),
+                            Base:0,
+                            Arc:[[-0.2,0.2,1],[0.1,0.6,1],[0.4,0.8,1.2],[1,1,2],[1.6,0.8,1.2],[2.4,0.4,1]],
+                            StrokeStyle:hex2rgb(_defaultColor)
+                        };
+                    },
+                    FT:function(canvas){
+                        return {
+                            Rate:100,
+                            Base:0
+                        };
+                    },
+                    BT:function(canvas){
+                        var _radius = Math.min(canvas.width,canvas.height)/8;
+                        return {
+                            Rate:Math.round(_radius/30),
+                            Base:-100
+                        };
+                    },
+                    FF:function(canvas){
+                        var _radius = Math.min(canvas.width,canvas.height)/8;
+                        return {
+                            Rate:1,
+                            Base:170
+                        };
+                    },
+                    BF:function(canvas){
+                        var _radius = Math.min(canvas.width,canvas.height)/8;
+                        return {
+                            Rate:Math.round(_radius/30),
+                            Base:0
+                        };
+                    }
+                }
+            });
 
-                },config)
-                var _ctx = canvas._context;
+            this.cricle=function(canvas,data,config,keyname){
+                initConfig(canvas,this.DefaultConfig.cricle,keyname,config,function(){});
+                var _ctx = canvas._context,
+                    _base = (config.Base+getAverage(data))*config.Rate,
+                    _radius =config.Radius,
+                    _x=config.XMid,
+                    _y=config.YMid,
+                    _arc;
+
+                for(var i=0,l=config.Arc.length;i<l;i++){
+                    var _arc = config.Arc[i];
+                    _ctx.beginPath();
+                    _ctx.arc(_x, _y, _radius+Math.max(-_radius,_base*_arc[0]), 0, Math.PI*2, true);
+                    _ctx.lineWidth = _arc[2];
+                    _ctx.strokeStyle = ['rgba(', config.StrokeStyle,',',_arc[1],')'].join('');
+                    _ctx.stroke();
+                    _ctx.closePath();
+                }
+
             };
 
         };
@@ -478,7 +533,7 @@
                 me._matchObj(canvas,_reveicer,renderObj);
             },
             clearCanvas:function(canvas){
-                // _ctx.clearRect(0,0,canvas.width,canvas.height); not work...oh my god
+                canvas._context.clearRect(0,0,canvas.width,canvas.height); //not work...oh my god
                 canvas.width=canvas.width;
             },
             _drawCanvas:function(canvas){

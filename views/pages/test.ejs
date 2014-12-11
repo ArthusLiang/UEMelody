@@ -15,14 +15,20 @@
           navigator.webkitGetUserMedia({audio:true},function(e){
             var context = new webkitAudioContext(),
               audioInput = context.createMediaStreamSource(e),
-              analyser = context.createAnalyser();
-              audioInput.connect(analyser);
+              analyser = context.createAnalyser(),
+              splitter = context.createChannelSplitter();
+
+              analyser.smoothingTimeConstant = 0.3;
+              analyser.fftSize = 1024;
+
+              audioInput.connect(splitter);
+              splitter.connect(analyser,0,0);
               analyser.connect(context.destination);
 
-              sonicPainter.attach(cvs1,analyser,{'FF':{func:'line'}});
-              sonicPainter.attach(cvs2,analyser,{'FT':{func:'line'}});
-              sonicPainter.attach(cvs3,analyser,{'BF':{func:'line'}});
-              sonicPainter.attach(cvs4,analyser,{'BT':{func:'line'}});
+              sonicPainter.attach(cvs1,analyser,{'BF':{func:'line'}});
+              sonicPainter.attach(cvs2,analyser,{'FF':{func:'line'}});
+              sonicPainter.attach(cvs3,analyser,{'BT':{func:'line'}});
+              sonicPainter.attach(cvs4,analyser,{'FT':{func:'line'}});
 
           },function(){});
 
