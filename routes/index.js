@@ -6,8 +6,8 @@ router.get('/', function(req, res) {
   res.render('./pages/index', {title:'Express'});
 });
 
-router.get('/test', function(req, res) {
-  res.render('./pages/test', {title:'SuperSonic Painter Testing Page'});
+router.get('/painter', function(req, res) {
+  res.render('./pages/Painter', {title:'SuperSonic Painter Testing Page'});
 });
 
 
