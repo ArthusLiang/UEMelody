@@ -10,5 +10,8 @@ router.get('/painter', function(req, res) {
   res.render('./pages/Painter', {title:'SuperSonic Painter Testing Page'});
 });
 
+router.get('/guitar', function(req, res) {
+  res.render('./pages/guitar', {title:'guitar Testing Page'});
+});
 
 module.exports = router;
