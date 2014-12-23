@@ -14,4 +14,9 @@ router.get('/guitar', function(req, res) {
   res.render('./pages/guitar', {title:'guitar Testing Page'});
 });
 
+router.get('/Oscillator', function(req, res) {
+  res.render('./pages/Oscillator', {title:'Oscillator'});
+});
+
+
 module.exports = router;
