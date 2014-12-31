@@ -224,12 +224,28 @@
                 return _sections;
             }
         };
+        var makeDistortionCurve=function(amount) {
+            var k = typeof amount === 'number' ? amount : 50,
+                n_samples = 44100,
+                curve = new Float32Array(n_samples),
+                deg = Math.PI / 180,
+                i = 0,
+                x;
+            for ( ; i < n_samples; ++i ) {
+                x = i * 2 / n_samples - 1;
+                curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        };
 
         var Player=function(context){
             this.Ctx = context || new webkitAudioContext();
-            this.Oscillator =this.Ctx .createOscillator();
+            //this.Oscillator =this.Ctx .createOscillator();
             this.IsRunning=false;
-            this.Oscillator.connect(this.Ctx.destination);
+            //this.Oscillator.connect(this.Ctx.destination);
+            this.WaveShaperNode = this.Ctx.createWaveShaper();
+            this.WaveShaperNode.curve=makeDistortionCurve(7);
+            this.WaveShaperNode.connect(this.Ctx.destination);
         };
         Player.prototype={
             _complie:function(musicScore,rate){
@@ -240,6 +256,7 @@
                 me.IsRunning=true;
                 var _index=0,
                     _ctx = this.Ctx,
+                    _destination = me.WaveShaperNode,
                     _osc = me.Oscillator,
                     _cData,
                     _cTime = _ctx.currentTime,
@@ -253,7 +270,7 @@
                              delete _cData.Osc;
                             _cData.Osc = _ctx.createOscillator();
                             _cData.Osc.OscillatorType ='sine';
-                            _cData.Osc.connect(_ctx.destination);
+                            _cData.Osc.connect(_destination);
                             _cData.Osc.frequency.value = _cData.frequency;
                             _cData.Osc.start(_cTime+_cData.relativeTime*_speedRate);
                             _cData.Osc.stop(_cTime+(_cData.relativeTime+_cData._len)*_speedRate);
