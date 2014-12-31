@@ -287,7 +287,7 @@
 
 
     /*
-    * @namespace   MusicScore
+    * @namespace   Track
     * @Author:     yulianghuang
     * @CreateDate  2014/12/12
     * @Desciption  Record Music Score
@@ -308,7 +308,7 @@
     })();
 
     /*
-    * @namespace   MusicScore
+    * @namespace   Board
     * @Author:     yulianghuang
     * @CreateDate  2014/12/12
     * @Desciption  Record Music Score
