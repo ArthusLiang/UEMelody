@@ -23,10 +23,9 @@
             this.isArray=function (obj) {
                 return Object.prototype.toString.call(obj) === '[object Array]';
             };
-        },
-        Timer=function(){
-
         };
+
+
 
     /*
     * @namespace   MusicScore
@@ -35,23 +34,26 @@
     * @Desciption  Record Music Score
     */
     (function(){
+
         var MusicalAlphabet = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],
             RollCallName=['do','re','mi','fa','sol','la','si'],
             TuneInterval={
-                major:[2,2,1,2,2,2,1],
-                minor:[2,1,2,2,1,2,2],
-                major5:[2,2,3,2,3],
-                minor5:[2,3,2,3,2]
+                major:[0,2,4,5,7,9,11],//[2,2,1,2,2,2,1]
+                minor:[0,2,3,5,7,8,10],//[2,1,2,2,1,2,2]
+                major5:[0,2,4,7,9],//[2,2,3,2,3]
+                minor5:[0,2,5,7,10]//[2,3,2,3,2]
             },
             RollCall= [1,2,3,4,5,6,7],//0 is special standard for no sound
             freqChat={},
-            freqRange=7,//C1-C7
+            freqRange=5,
             regBeat=/^\d\/\d/,
+            regBaseRollCall=/\d/,
+            regHalfRollCall=/\#|b/,
             _oneBeat=96,// the length of one beat
             i,j,base;
 
         //init freq chat
-        for(i=1;i<freqRange;i++){
+        for(i=-4;i<freqRange;i++){
             freqChat[i]={};
             base = (i-1)*12;
             for(j=0;j<12;j++){
@@ -61,18 +63,25 @@
         }
 
         /*
-        * @param rollcall number in [1,2,3,4,5,6,7]
+        * @param rollcall number in [1,2,3,4,5,6,7]/1#.2b
         * @param duration number 1,1/2,1/4,1/8,1/12,1/16
         * @param hasDot boolen
         */
         var Note =function(rollcall,duration,freqIndex,hasDot,isPart){
             this.Rollcall = rollcall;
-            this.FreqIndex = freqIndex || 3;
+            this.FreqIndex = freqIndex || 0;
             this.Duration = duration || 1/4;
             this.HasDot = hasDot;
             this._len = this.Duration * _oneBeat * (hasDot ? 1.5 : 1);//duratuib * 4 * 24
             this.IsPart = isPart;
             this.setDot();
+            this.BaseRollCall = +regBaseRollCall.exec(rollcall)[0];
+            var _half = regHalfRollCall.exec(rollcall);
+            if(_half){
+                this.HalfRollCall = _half[0] == '#' ? 1:-1;
+            }else{
+                this.HalfRollCall=0;
+            }
         };
         Note.prototype={
             divid:function(remain,sectionMax){
@@ -122,10 +131,27 @@
             };
             me.Data=[];
             me.Sections=[];
-            this.IsCompiled=false;
+            me.IsCompiled=false;
+            //
+            me._baseArrIndex = 1;
+            me._baseNameIndex= MusicalAlphabet.indexOf(_alphabet);
+            //me._baseXindex = _alphabet.indexOf(me.FreqChat[me._baseArrIndex]);
+
         };
         MusicScore.prototype={
             FreqChat:freqChat,
+            initFreq:function(note){
+                if(note.BaseRollCall!==0){
+                    var me=this,
+                        _tuneInterval = TuneInterval[me.Mode.Interval],
+                        _y= me._baseArrIndex+note.FreqIndex,
+                        _x= me._baseNameIndex+_tuneInterval[note.BaseRollCall-1]+note.HalfRollCall;
+
+                    _y+= parseInt(_x/12);
+                    _x = _x%12;
+                    note.frequency = freqChat[_y][MusicalAlphabet[_x]];
+                }
+            },
             w:function(){
                 var arr = arguments;
                 for(var i=0,l=arguments.length;i<l;i++){
@@ -166,10 +192,14 @@
                     _last=0,
                     _remain = _sectionMax,
                     _sections = [[]],
+                    _sum=0,
                     j,k;
 
                 for(var i=0,l=_data.length;i<l;i++){
                     var _note = _data[i];
+                    _note.relativeTime = _sum;
+                    _sum+=_note._len;
+                    me.initFreq(_note);
                     if(_note._len<=_remain){
                         _sections[_last].push(_note);
                         _remain-=_note._len;
@@ -195,8 +225,64 @@
             }
         };
 
+        var Player=function(context){
+            this.Ctx = context || new webkitAudioContext();
+            this.Oscillator =this.Ctx .createOscillator();
+            this.IsRunning=false;
+            this.Oscillator.connect(this.Ctx.destination);
+        };
+        Player.prototype={
+            _complie:function(musicScore,rate){
+
+            },
+            play:function(musicScore,speed){
+                var me=this;
+                me.IsRunning=true;
+                var _index=0,
+                    _ctx = this.Ctx,
+                    _osc = me.Oscillator,
+                    _cData,
+                    _cTime = _ctx.currentTime,
+                    _max=musicScore.Data.length,
+                    _speed = speed || 60,
+                    _speedRate = 60/_speed/_oneBeat*4;
+
+                    for(var i=0,l=musicScore.Data.length;i<l;i++){
+                        _cData = musicScore.Data[i];
+                        if(_cData.BaseRollCall!=0){
+                             delete _cData.Osc;
+                            _cData.Osc = _ctx.createOscillator();
+                            _cData.Osc.OscillatorType ='sine';
+                            _cData.Osc.connect(_ctx.destination);
+                            _cData.Osc.frequency.value = _cData.frequency;
+                            _cData.Osc.start(_cTime+_cData.relativeTime*_speedRate);
+                            _cData.Osc.stop(_cTime+(_cData.relativeTime+_cData._len)*_speedRate);
+                        }
+                    }
+                    /*
+                    _loop=function(){
+                        if(me.IsRunning && _index < _max){
+                            _cData = musicScore.Data[_index];
+                            _osc.frequency.value = _cData.frequency;
+                            _osc.start(_cTime+_cData.relativeTime*_speedRate);
+                            _osc.stop(_cTime+(_cData.relativeTime+_cData._len)*_speedRate);
+                            _osc.onended=function(){
+                                _index++;
+                                _loop();
+                            }
+                        }
+                    };
+                    _loop();
+                    */
+            },
+            stop:function(){
+                this.IsRunning=false
+            }
+        };
+
         Guitar.MusicScore = MusicScore;
         Guitar.Note = Note;
+        Guitar.Player = Player;
     })();
 
 
@@ -211,18 +297,6 @@
 
         };
         Track.prototype = {
-            record:function(){
-
-            },
-            play:function(){
-
-            }
-        };
-
-        var Player = function(){
-
-        };
-        Player.prototype={
             record:function(){
 
             },

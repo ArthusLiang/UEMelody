@@ -6,9 +6,17 @@
     <script type="text/javascript" src='/javascripts/UEMelody.js'></script>
     <script type="text/javascript" src='/javascripts/guitar.js'></script>
     <script type="text/javascript">
-    window.onload=function(){
-      var context = new webkitAudioContext();
-    }
+      window.onload=function(){
+        var context = new webkitAudioContext();
+        var osc  = context.createOscillator();
+        osc.frequency.value = 440;
+        osc.connect(context.destination);
+        setTimeout(function(){
+          var _c = context.currentTime;
+          osc.start(_c);
+          osc.stop(_c+1);
+        },1200);
+      }
     </script>
   </head>
   <body>
