@@ -11,8 +11,11 @@
         var osc  = context.createOscillator();
         osc.frequency.value = 440;
         osc.connect(context.destination);
+        var _c = context.currentTime;
+        osc.start(_c);
+        osc.stop(_c+1);
         setTimeout(function(){
-          var _c = context.currentTime;
+          _c = context.currentTime;
           osc.start(_c);
           osc.stop(_c+1);
         },1200);

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <% include ../partials/using %>
+    <script type="text/javascript" src='/javascripts/core.js'></script>
+    <script type="text/javascript" src='/javascripts/melody.js'></script>
+    <script type="text/javascript" src='/javascripts/painter.js'></script>
+    <script type="text/javascript" src='/javascripts/voix.js'></script>
+    <script type="text/javascript" src='/javascripts/ultrasound.js'></script>
+    <script type="text/javascript">
+        window.onload=function(argument) {
+            var ultrasoundCore = new Jsonic.Ultrasound(),
+                _sender = ultrasoundCore.createSender();
+            var txt = document.getElementById('txt'),
+                btn = document.getElementById('btn');
+            btn.onclick=function(){
+                _sender.send(txt.value);
+            };
+        }
+    </script>
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <input id='txt' type="text" />
+    <a id='btn'>Send</a>
+  </body>
+</html>

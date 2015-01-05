@@ -248,9 +248,6 @@
             this.WaveShaperNode.connect(this.Ctx.destination);
         };
         Player.prototype={
-            _complie:function(musicScore,rate){
-
-            },
             play:function(musicScore,speed){
                 var me=this;
                 me.IsRunning=true;

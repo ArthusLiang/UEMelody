@@ -18,5 +18,10 @@ router.get('/Oscillator', function(req, res) {
   res.render('./pages/Oscillator', {title:'Oscillator'});
 });
 
-
+router.get('/test', function(req, res) {
+  res.render('./pages/test', {title:'Test'});
+});
+router.get('/test2', function(req, res) {
+  res.render('./pages/test2', {title:'Test2'});
+});
 module.exports = router;
