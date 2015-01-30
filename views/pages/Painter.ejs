@@ -3,7 +3,7 @@
   <head>
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <% include ../partials/using %>
-    <script type="text/javascript" src='/javascripts/SonicPainter.js'></script>
+    <script type="text/javascript" src='/javascripts/Jsonic.js'></script>
     <script type="text/javascript">
 	    window.onload=function(argument){
 	        var cvs1=document.getElementById('cvs1'),
@@ -11,15 +11,15 @@
             cvs3=document.getElementById('cvs3'),
             cvs4=document.getElementById('cvs4'),
             btn=document.getElementById('btnStart');
-          var sonicPainter = new SonicPainter();
+          var sonicPainter = new Jsonic.Painter();
           navigator.webkitGetUserMedia({audio:true},function(e){
             var context = new webkitAudioContext(),
               audioInput = context.createMediaStreamSource(e),
               analyser = context.createAnalyser(),
               splitter = context.createChannelSplitter();
 
-              analyser.smoothingTimeConstant = 0.3;
-              analyser.fftSize = 1024;
+              //analyser.smoothingTimeConstant = 0.3;
+              //analyser.fftSize = 1024;
 
               audioInput.connect(splitter);
               splitter.connect(analyser,0,0);

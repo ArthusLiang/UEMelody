@@ -3,27 +3,142 @@
   <head>
     <link rel='stylesheet' href='/stylesheets/style.css' />
     <% include ../partials/using %>
-    <script type="text/javascript" src='/javascripts/core.js'></script>
-    <script type="text/javascript" src='/javascripts/melody.js'></script>
-    <script type="text/javascript" src='/javascripts/painter.js'></script>
-    <script type="text/javascript" src='/javascripts/voix.js'></script>
-    <script type="text/javascript" src='/javascripts/ultrasound.js'></script>
+    <script type="text/javascript" src='/javascripts/Jsonic.js'></script>
+
     <script type="text/javascript">
-        window.onload=function(argument) {
-            var ultrasoundCore = new Jsonic.Ultrasound(),
-                _sender = ultrasoundCore.createSender();
-            var txt = document.getElementById('txt'),
-                btn = document.getElementById('btn');
-            btn.onclick=function(){
-                _sender.send(txt.value);
+
+        var tone=function(ctx,freq,start,stop) {
+            var osc = ctx.createOscillator();
+            osc.frequency.value = freq;
+            osc.connect(ctx.destination);
+            osc.start(start);
+            osc.stop(stop);
+
+        },
+        gainLine = function(ctx,freq,data,time,duration,needDown) {
+            var osc = ctx.createOscillator(),
+                gainNode = ctx.createGain();
+            osc.frequency.value = freq;
+            osc.connect(gainNode);
+            gainNode.gain.value=0;
+            gainNode.connect(ctx.destination);
+            osc.start(0);
+            for(var i=0,l=data.length;i<l;i++){
+                gainNode.gain.setValueAtTime(+data[i],time+duration*i);
+                if(data[i]!=0 && needDown){
+                    gainNode.gain.setValueAtTime(0,time+duration*(i+0.8));
+                }
+                //gainNode.gain.setValueAtTime(0,time+duration*(i+0.8));
+            }
+            gainNode.gain.setValueAtTime(0,time+duration*i);
+        },
+        f=function(ctx,freq,time,data){
+            //var osc = ctx.createOscillator();
+            //var gainNode = ctx.createGain();
+            //gainNode.gain.value=0;
+            for(var i=0,l=data.length;i<l;i++){
+                if(data[i]==1){
+                    tone(ctx,freq,time+i*0.5,time+(i+1)*0.5);
+                }
+                //gainNode.gain.setValueAtTime(data[i],time+i+1);
+            }
+            //gainNode.gain.setValueAtTime(0,time+i+1);
+            //osc.frequency.value = +freq;
+
+            //osc.connect(gainNode);
+            //gainNode.connect(ctx.destination);
+            //osc.start(time);
+        };
+        var canrequest = true;
+        var requestAnimationFrame2=function(func,interval){
+            var _start = new Date(),
+                _ob={},
+                _num=0,
+                _now,
+                _range,
+                _distance,
+                _pos= interval/2;
+            canrequest = true;
+            console.log(_start.getSeconds(),_start.getMilliseconds());
+            var _callback=function(){
+                _now= new Date();
+                _distance = _now-_start;
+                if(_distance%interval > _pos){
+                    _range = _distance/interval>>0;
+                    if(_ob[_range]===undefined){
+                        _ob[_range] = 1;
+                        _num++;
+                        func();
+                        console.log(_now.getSeconds(),_now.getMilliseconds());
+                    }
+                    if(_num===1000){
+                        _num=0;
+                        _start.setSeconds(_start.getSeconds()+interval);
+                        //setSeconds()
+                        _ob={};
+                    }
+                }
+                canrequest && requestAnimationFrame(_callback);
             };
+            _callback();
+        };
+        window.onload=function(argument) {
+            var ctx = new AudioContext(),
+                btn = document.getElementById('btn'),
+                txt = document.getElementById('txt');
+
+            var a=[];
+            for(var i=216;i<236;i+=5){
+                a.push(i*93.75);
+            }
+            txt.value=a.join(',');
+            var header='1111111111111111',
+                footer='0000000000000000';
+
+            var message=header+'010010100111001101101111011011100110100101100011'+footer,
+                tdata=[[],[],[],[]];
+
+            for(var j=0,k=message.length;j<k;j+=2){
+                if(message[j]==0){
+                   tdata[0].push(0);
+                   tdata[1].push(1);
+                }else{
+                   tdata[0].push(1);
+                   tdata[1].push(0);
+                }
+
+                if(message[j+1]==0){
+                   tdata[2].push(0);
+                   tdata[3].push(1);
+                }else{
+                   tdata[2].push(1);
+                   tdata[3].push(0);
+                }
+            }
+
+            btn.onclick=function(){
+                var _arr=txt.value.split(','),
+                    _t = ctx.currentTime+0.5;
+
+                gainLine(ctx,+_arr[0],tdata[0].join(''),_t+0.5,0.5,true);
+                gainLine(ctx,+_arr[1],tdata[1].join(''),_t+0.5,0.5);
+                gainLine(ctx,+_arr[2],tdata[2].join(''),_t+0.5,0.5,true);
+                gainLine(ctx,+_arr[3],tdata[3].join(''),_t+0.5,0.5);
+
+                console.log(tdata[0].join(''));
+                console.log(tdata[1].join(''));
+                console.log(tdata[2].join(''));
+                console.log(tdata[3].join(''));
+            };
+
         }
     </script>
   </head>
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
-    <input id='txt' type="text" />
+    <input id='txt' type="text" value='20000,21000,22000' />
     <a id='btn'>Send</a>
   </body>
 </html>
+

@@ -6,21 +6,17 @@
     <script type="text/javascript" src='/javascripts/sonicTrans.js'></script>
     <script type="text/javascript">
       window.onload=function(){
-
         var band = new window.Band();
         band.initDefaultChannel();
-
-        navigator.webkitGetUserMedia({
-            audio:{optional:[{echoCancellation:false}]}
-        },function(stream){
-            _input = band.AudioContext.createMediaStreamSource(stream);
-            band.listenSource(_input);
-            band.scanEnvironment();
-        },function(e){});
+        document.getElementById('btn').onclick=function(){
+            band.send('Jsonic');
+        };
       }
     </script>
   </head>
   <body>
-    <div id='board'></div>
+    <h1><%= title %></h1>
+    <input id='txt' type="text" value='216' />&nbsp;<a id='btn'>Send</a>
+    <div id='bSending'></div>
   </body>
 </html>
